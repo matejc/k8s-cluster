@@ -1,4 +1,3 @@
-{ inputs }:
 { config
 , lib
 , pkgs
@@ -8,54 +7,11 @@
 with lib;
 with pkgs;
 let
-  secrets = (import ../secrets/default.nix).jupyenv;
-
-  jupyenvOptions =
-    { name, config, lib, ... }:
-    { options = {
-      enable = mkEnableOption "Whether to enable JupyterLab.";
-
-      name = mkOption {
-        default = name;
-        type = types.str;
-        description = "Internal name of JupyterLab instance.";
-      };
-
-      namespace = mkOption {
-        default = "jupyenv-${name}";
-        type = types.str;
-        description = "Target namespace.";
-      };
-
-      token = mkOption {
-        type = types.str;
-        description = "JupyterLab access token.";
-      };
-
-      storageSize = mkOption {
-        type = types.str;
-        default = "1Gi";
-        description = "JupyterLab PV size.";
-      };
-
-      settings = mkOption {
-        type = types.attrs;
-        default = {
-          kernel.python.example.enable = true;
-        };
-        description = "JupyterLab PV size.";
-      };
-
-      maxKernels = mkOption {
-        type = types.int;
-        default = 1;
-        description = "Max JupyterLab kernels.";
-      };
-    }; };
-
-  enabled = mapAttrs (_: c: c // {
-    package = inputs.jupyenv.lib."x86_64-linux".mkJupyterlabNew c.settings;
-  }) (lib.filterAttrs (_: v: v.enable) config.apps.jupyenv);
+  jupyenv = import "${fetchgit {
+    url = "https://github.com/tweag/jupyenv";
+    rev = "96dd4876b799e706d504220f4cd2a24dbb3afb58";
+    sha256 = "sha256-DEV4puCCRRf4cnpjlaZLTPrbCUZkkLSAw2JPEkIWMDQ=";
+  }}/default.nix";
 
   paths = [
     zlib
@@ -78,7 +34,7 @@ let
     dockerTools.caCertificates
   ] ++ (nonRootShadowSetup { uid = 999; user = "jupyenv"; home = "/data"; });
 
-  nonRootShadowSetup = { user, uid, gid ? uid, home ? "/home/${user}" }: with pkgs; [
+  nonRootShadowSetup = { user, uid, gid ? uid, home ? "/home/${user}" }: [
     (
     writeTextDir "etc/shadow" ''
       root:!x:::::::
@@ -182,105 +138,155 @@ let
     };
   };
 in {
-  options.apps.jupyenv = mkOption {
-    default = { };
-    type = types.attrsOf (types.submodule jupyenvOptions);
-    description = "Jupyenv configuration";
-  };
+  submodules.imports = [
+    {
+      module = {
+        name,
+        config,
+        ...
+      }: let
+        cfg = config.submodule.args;
+      in {
+        imports = with kubenix.modules; [submodule docker k8s];
 
-  config.kubernetes = lib.mkIf (enabled != {}) (mkMerge (lib.mapAttrsToList (_: cfg: {
-    resources.namespaces.${cfg.namespace} = { };
+        options.submodule.args = {
+          enable = mkEnableOption "Whether to enable JupyterLab.";
 
-    resources.secrets."jupyenv-${cfg.name}" = {
-      metadata.namespace = cfg.namespace;
-      stringData = {
-        "JUPYTER_TOKEN" = cfg.token;
-      };
-    };
+          namespace = mkOption {
+            default = "jupyenv-${name}";
+            type = types.str;
+            description = "Target namespace.";
+          };
 
-    resources.persistentVolumeClaims."jupyenv-${cfg.name}" = {
-      metadata.namespace = cfg.namespace;
-      spec = {
-        accessModes = [ "ReadWriteOnce" ];
-        resources.requests.storage = cfg.storageSize;
-      };
-    };
+          token = mkOption {
+            type = types.str;
+            description = "JupyterLab access token.";
+          };
 
-    resources.services."jupyenv-${cfg.name}" = {
-      metadata.namespace = cfg.namespace;
-      spec = {
-        selector.app = "jupyenv-${cfg.name}";
-        ports = [{
-          protocol = "TCP";
-          port = 8080;
-          targetPort = 8080;
-        }];
-      };
-    };
+          storageSize = mkOption {
+            type = types.str;
+            default = "1Gi";
+            description = "JupyterLab PV size.";
+          };
 
-    resources.deployments."jupyenv-${cfg.name}" = {
-      metadata.namespace = cfg.namespace;
-      metadata.labels.app = "jupyenv-${cfg.name}";
-      spec = {
-        replicas = 1;
-        selector.matchLabels.app = "jupyenv-${cfg.name}";
-        template = {
-          metadata.labels.app = "jupyenv-${cfg.name}";
-          spec = {
-            volumes = [{
-              name = "data";
-              persistentVolumeClaim.claimName = "jupyenv-${cfg.name}";
-            }];
-            containers = [{
-              name = "jupyenv";
-              resources = {
-                requests = {
-                  memory = "256Mi";
-                  cpu = "250m";
-                };
-                limits = {
-                  memory = "1Gi";
-                  cpu = "500m";
-                };
-              };
-              readinessProbe = {
-                tcpSocket.port = 8080;
-                initialDelaySeconds = 15;
-                periodSeconds = 5;
-              };
-              livenessProbe = {
-                tcpSocket.port = 8080;
-                initialDelaySeconds = 15;
-                periodSeconds = 5;
-              };
-              env = [{
-                name = "JUPYTER_TOKEN";
-                valueFrom = {
-                  secretKeyRef = {
-                    key = "JUPYTER_TOKEN";
-                    name = "jupyenv-${cfg.name}";
-                  };
-                };
-              }];
-              image = config.docker.images."jupyenv-${cfg.name}".path;
-              imagePullPolicy = "IfNotPresent";
+          settings = mkOption {
+            type = types.attrs;
+            default = {
+              kernel.python.example.enable = true;
+            };
+            description = "JupyterLab PV size.";
+          };
+
+          maxKernels = mkOption {
+            type = types.int;
+            default = 1;
+            description = "Max JupyterLab kernels.";
+          };
+
+          package = mkOption {
+            type = types.nullOr types.package;
+            default = jupyenv.lib."x86_64-linux".mkJupyterlabNew cfg.settings;
+            description = "Jupyter package.";
+          };
+        };
+
+        config = {
+          submodule = {
+            name = "jupyenv";
+            passthru = {
+              kubernetes.objects = config.kubernetes.objects;
+              docker.images = config.docker.images;
+            };
+          };
+
+          kubernetes.namespace = cfg.namespace;
+          kubernetes.resources.namespaces.${cfg.namespace} = { };
+
+          kubernetes.resources.secrets."jupyenv-${name}" = {
+            stringData = {
+              "JUPYTER_TOKEN" = cfg.token;
+            };
+          };
+
+          kubernetes.resources.persistentVolumeClaims."jupyenv-${name}" = {
+            spec = {
+              accessModes = [ "ReadWriteOnce" ];
+              resources.requests.storage = cfg.storageSize;
+            };
+          };
+
+          kubernetes.resources.services."jupyenv-${name}" = {
+            spec = {
+              selector.app = "jupyenv-${name}";
               ports = [{
-                containerPort = 8080;
+                protocol = "TCP";
+                port = 8080;
+                targetPort = 8080;
               }];
-              volumeMounts = [{
-                mountPath = "/data/work";
-                name = "data";
-              }];
-            }];
+            };
+          };
+
+          kubernetes.resources.deployments."jupyenv-${name}" = {
+            metadata.labels.app = "jupyenv-${name}";
+            spec = {
+              replicas = 1;
+              selector.matchLabels.app = "jupyenv-${name}";
+              template = {
+                metadata.labels.app = "jupyenv-${name}";
+                spec = {
+                  volumes = [{
+                    name = "data";
+                    persistentVolumeClaim.claimName = "jupyenv-${name}";
+                  }];
+                  containers = [{
+                    name = "jupyenv";
+                    resources = {
+                      requests = {
+                        memory = "256Mi";
+                        cpu = "250m";
+                      };
+                      limits = {
+                        memory = "1Gi";
+                        cpu = "500m";
+                      };
+                    };
+                    readinessProbe = {
+                      tcpSocket.port = 8080;
+                      initialDelaySeconds = 15;
+                      periodSeconds = 5;
+                    };
+                    livenessProbe = {
+                      tcpSocket.port = 8080;
+                      initialDelaySeconds = 15;
+                      periodSeconds = 5;
+                    };
+                    env = [{
+                      name = "JUPYTER_TOKEN";
+                      valueFrom = {
+                        secretKeyRef = {
+                          key = "JUPYTER_TOKEN";
+                          name = "jupyenv-${name}";
+                        };
+                      };
+                    }];
+                    image = config.docker.images."jupyenv-${name}".path;
+                    imagePullPolicy = "IfNotPresent";
+                    ports.http.containerPort = 8080;
+                    volumeMounts = [{
+                      mountPath = "/data/work";
+                      name = "data";
+                    }];
+                  }];
+                };
+              };
+            };
+          };
+
+          docker = {
+            images."jupyenv-${name}".image = buildImage cfg;
           };
         };
       };
-    };
-  }) enabled));
-
-  config.docker = lib.mkIf (enabled != {}) (mkMerge ([{
-    registry.url = "docker.io";
-  }] ++ (lib.mapAttrsToList (_: cfg: {
-    images."jupyenv-${cfg.name}".image = buildImage cfg;
-  }) enabled)));
+    }
+  ];
 }

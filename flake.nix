@@ -5,7 +5,6 @@
       url = "github:hall/kubenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    jupyenv.url = "github:tweag/jupyenv";
   };
 
   outputs = {self, ... }@inputs: let
@@ -19,34 +18,48 @@
           k8s
           helm
           docker
+          submodules
           ./modules/searxng.nix
           ./modules/tunnel.nix
           ./modules/tailscale.nix
           ./modules/syncthing.nix
           ./modules/jitsi.nix
-          (import ./modules/jupyenv.nix { inherit inputs; })
+          ./modules/jupyenv.nix
         ];
 
         kubenix.project = "matejc";
         kubernetes.version = "1.23";
         kubernetes.kubeconfig = ./secrets/civo-matejc-kubeconfig;
+        docker.registry.url = "docker.io";
 
-        apps = {
+        submodules.instances = {
           searxng = {
-            enable = true;
-            baseUrl = "https://${vars.searxng.domainName}";
-            secretKey = vars.searxng.secretKey;
+            submodule = "searxng";
+            args = {
+              enable = true;
+              baseUrl = "https://${vars.searxng.domainName}";
+              secretKey = vars.searxng.secretKey;
+            };
           };
           jitsi = {
-            enable = true;
-            timeZone = "Europe/Helsinki";
-            publicURL = "https://${vars.jitsi.domainName}";
-            publicIP = vars.clusterIP;
+            submodule = "jitsi";
+            args = {
+              enable = true;
+              timeZone = "Europe/Helsinki";
+              publicURL = "https://${vars.jitsi.domainName}";
+              publicIP = vars.clusterIP;
+            };
           };
-          jupyenv.playground1 = {
-            enable = true;
-            token = vars.jupyenv.playground1.token;
+          playground1 = {
+            submodule = "jupyenv";
+            args = {
+              enable = true;
+              token = vars.jupyenv.playground1.token;
+            };
           };
+        };
+
+        apps = {
           tunnel = {
             enable = true;
             credentials = vars.tunnel.credentials;
