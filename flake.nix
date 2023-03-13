@@ -9,6 +9,20 @@
 
   outputs = {self, ... }@inputs: let
     system = "x86_64-linux";
+    pkgs = inputs.nixpkgs.legacyPackages.${system};
+
+    deployScript = pkgs.writeScript "deploy.sh" ''
+      #!${pkgs.stdenv.shell}
+      set -e
+      ${pkgs.kubectl}/bin/kubectl \
+        --kubeconfig "${result.config.kubernetes.kubeconfig}" \
+        apply -f "${result.config.kubernetes.result}" $@
+
+      ${pkgs.kubectl}/bin/kubectl \
+        --kubeconfig "${result.config.kubernetes.kubeconfig}" \
+        delete all --all-namespaces \
+        -l kubenix/hash,kubenix/hash!=${result.config.kubernetes.generated.labels."kubenix/hash"} $@
+    '';
 
     vars = import ./secrets/default.nix;
 
@@ -29,7 +43,7 @@
 
         kubenix.project = "matejc";
         kubernetes.version = "1.23";
-        kubernetes.kubeconfig = ./secrets/civo-matejc-kubeconfig;
+        kubernetes.kubeconfig = "${vars.kubeconfig}";
         docker.registry.url = "docker.io";
 
         submodules.instances = {
@@ -96,6 +110,7 @@
     packages.${system} = {
       default = result.config.kubernetes.result;
       images = result.config.docker.copyScript;
+      deploy = deployScript;
     };
   };
 }
