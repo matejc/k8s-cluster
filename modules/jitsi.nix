@@ -19,8 +19,6 @@ with pkgs;
         imports = with kubenix.modules; [submodule helm k8s];
 
         options.submodule.args = {
-          enable = mkEnableOption "Whether to enable Jitsi meet.";
-
           namespace = mkOption {
             default = "default";
             type = types.str;

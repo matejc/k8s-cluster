@@ -50,7 +50,6 @@
           searxng = {
             submodule = "searxng";
             args = {
-              enable = true;
               baseUrl = "https://${vars.searxng.domainName}";
               secretKey = vars.searxng.secretKey;
             };
@@ -58,7 +57,6 @@
           jitsi = {
             submodule = "jitsi";
             args = {
-              enable = true;
               timeZone = "Europe/Helsinki";
               publicURL = "https://${vars.jitsi.domainName}";
               publicIP = vars.clusterIP;
@@ -67,41 +65,40 @@
           playground1 = {
             submodule = "jupyenv";
             args = {
-              enable = true;
               token = vars.jupyenv.playground1.token;
             };
           };
-        };
-
-        apps = {
-          tunnel = {
-            enable = true;
-            credentials = vars.tunnel.credentials;
-            settings = {
-              tunnel = vars.tunnel.name;
-              ingress = [
-                {
-                  hostname = vars.searxng.domainName;
-                  service = "http://searxng.default:8080";
-                }
-                {
-                  hostname = vars.jitsi.domainName;
-                  service = "http://jitsi-jitsi-meet-web.default:80";
-                }
-                {
-                  hostname = vars.jupyenv.playground1.domainName;
-                  service = "http://jupyenv-playground1.jupyenv-playground1:8080";
-                }
-                { service = "http_status:404"; }
-              ];
-            };
-          };
           syncthing = {
-            enable = true;
+            submodule = "syncthing";
+            args = { };
           };
           tailscale = {
-            enable = true;
-            serviceCidr = vars.serviceCidr;
+            submodule = "tailscale";
+            args.serviceCidr = vars.serviceCidr;
+          };
+          tunnel = {
+            submodule = "cloudflared";
+            args = {
+              credentials = vars.tunnel.credentials;
+              settings = {
+                tunnel = vars.tunnel.name;
+                ingress = [
+                  {
+                    hostname = vars.searxng.domainName;
+                    service = "http://searxng.default:8080";
+                  }
+                  {
+                    hostname = vars.jitsi.domainName;
+                    service = "http://jitsi-jitsi-meet-web.default:80";
+                  }
+                  {
+                    hostname = vars.jupyenv.playground1.domainName;
+                    service = "http://jupyenv-playground1.jupyenv-playground1:8080";
+                  }
+                  { service = "http_status:404"; }
+                ];
+              };
+            };
           };
         };
       };

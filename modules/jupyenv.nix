@@ -150,8 +150,6 @@ in {
         imports = with kubenix.modules; [submodule docker k8s];
 
         options.submodule.args = {
-          enable = mkEnableOption "Whether to enable JupyterLab.";
-
           namespace = mkOption {
             default = "jupyenv-${name}";
             type = types.str;
