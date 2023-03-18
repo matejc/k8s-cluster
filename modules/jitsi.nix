@@ -30,9 +30,9 @@ with pkgs;
             description = "Public url.";
           };
 
-          publicIP = mkOption {
-            type = types.str;
-            description = "Public IP (for jvb).";
+          publicIPs = mkOption {
+            type = types.listOf types.str;
+            description = "Public IPs (for jvb).";
           };
 
           timeZone = mkOption {
@@ -63,10 +63,10 @@ with pkgs;
               publicURL = cfg.publicURL;
               enableAuth = true;
               enableGuests = true;
-              jvb.publicIPs = [ cfg.publicIP ];
+              jvb.publicIPs = cfg.publicIPs;
               jvb.service.type = "NodePort";
               jvb.service.nodePort = 10000;
-              jvb.service.externalIPs = [ cfg.publicIP ];
+              jvb.service.externalIPs = cfg.publicIPs;
               web.extraEnvs = {
                 ENABLE_WELCOME_PAGE = "0";
               };

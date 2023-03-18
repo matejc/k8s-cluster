@@ -29,6 +29,11 @@ with pkgs;
             type = types.str;
             description = "Service CIDR.";
           };
+
+          authKey = mkOption {
+            type = types.str;
+            description = "Auth key.";
+          };
         };
 
         config = {
@@ -122,6 +127,11 @@ with pkgs;
                   serviceAccountName = "tailscale";
                 };
               };
+            };
+          };
+          kubernetes.resources.secrets.tailscale-auth = {
+            stringData = {
+              TS_AUTHKEY = cfg.authKey;
             };
           };
         };
