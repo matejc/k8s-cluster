@@ -48,13 +48,14 @@ with pkgs;
             chart = kubenix.lib.helm.fetch {
               chart = "syncthing";
               repo = "https://charts.truecharts.org/";
-              sha256 = "sha256-gnkZJzABBcAqUR7VRwRoNK3oEHTCRuxOxdxbpi6YxSI=";
+              sha256 = "sha256-owxoccsBt8qY6mRTnWh18cf62ymshH3YRgWDoxAAxRk=";
             };
             namespace = cfg.namespace;
             values = {
               manifests.enabled = false;
               controler.enabled = false;
-              portal.enabled = false;
+              portal.open.enabled = false;
+              portal.main.enabled = false;
               persistence.config = {
                 size = cfg.storageSize;
               };

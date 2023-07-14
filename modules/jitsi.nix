@@ -56,7 +56,7 @@ with pkgs;
             chart = kubenix.lib.helm.fetch {
               chart = "jitsi-meet";
               repo = "https://jitsi-contrib.github.io/jitsi-helm/";
-              sha256 = "sha256-5LmozjI65A/c84rnTe/I4NmQQM3a1OpZtqMGTL83RAo=";
+              sha256 = "sha256-XdRApyabcShLiES03igpO0/wVrR1fRFtLt7CZhCPb8w=";
             };
             namespace = cfg.namespace;
             values = {
@@ -65,8 +65,11 @@ with pkgs;
               enableGuests = true;
               jvb.publicIPs = cfg.publicIPs;
               jvb.service.type = "NodePort";
-              jvb.service.nodePort = 10000;
+              jvb.nodePort = 31293;
+              jvb.UDPPort = 31293;
               jvb.service.externalIPs = cfg.publicIPs;
+              jicofo.xmpp.password = "Y9KY12iq2Z";
+              jvb.xmpp.password = "59gGb3wMs2";
               web.extraEnvs = {
                 ENABLE_WELCOME_PAGE = "0";
               };

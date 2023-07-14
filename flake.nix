@@ -3,6 +3,7 @@
     nixpkgs.url = "path:/home/matejc/workarea/nixpkgs";
     kubenix = {
       url = "github:hall/kubenix";
+      #url = "path:/home/matejc/workarea/kubenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

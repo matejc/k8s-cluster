@@ -1,5 +1,4 @@
-{ config
-, lib
+{ lib
 , pkgs
 , kubenix
 , ...
@@ -20,6 +19,7 @@ in {
     ./modules/syncthing.nix
     ./modules/jitsi.nix
     ./modules/jupyenv.nix
+    ./modules/necesse.nix
   ];
 
   kubenix.project = "k3s";
@@ -42,15 +42,15 @@ in {
         namespace = "jitsi";
         timeZone = "Europe/Helsinki";
         publicURL = "https://${vars.jitsi.domainName}";
-        publicIPs = vars.jitsi.publicIPs;
+        publicIPs = vars.externalIPs;
       };
     };
-    playground1 = {
-      submodule = "jupyenv";
-      args = {
-        token = vars.jupyenv.playground1.token;
-      };
-    };
+    #playground1 = {
+    #  submodule = "jupyenv";
+    #  args = {
+    #    token = vars.jupyenv.playground1.token;
+    #  };
+    #};
     syncthing = {
       submodule = "syncthing";
       args = {
@@ -79,14 +79,26 @@ in {
               hostname = vars.jitsi.domainName;
               service = "http://jitsi-jitsi-meet-web.jitsi:80";
             }
-            {
-              hostname = vars.jupyenv.playground1.domainName;
-              service = "http://jupyenv-playground1.jupyenv-playground1:8080";
-            }
             { service = "http_status:404"; }
           ];
         };
       };
     };
+    #skyrim = {
+    #  submodule = "tilted-online";
+    #  args = {
+    #    namespace = "skyrim";
+    #    settings = vars.skyrim.settings;
+    #    loadorder = vars.skyrim.loadorder;
+    #    publicIPs = vars.externalIPs;
+    #  };
+    #};
+    #necesse = {
+    #  submodule = "necesse";
+    #  args = {
+    #    namespace = "necesse";
+    #    settings = vars.necesse;
+    #  };
+    #};
   };
 }

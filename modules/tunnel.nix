@@ -68,7 +68,8 @@ with pkgs;
                 spec = {
                   containers = [ {
                     name = "cloudflared";
-                    image = "cloudflare/cloudflared:2023.2.1";
+                    image = "cloudflare/cloudflared:latest";
+                    imagePullPolicy = "Always";
                     args = [ "tunnel" "--config" "/etc/cloudflared/config/config.yaml" "run" ];
                     livenessProbe = {
                       failureThreshold = 1; httpGet = { path = "/ready"; port = 2000; };

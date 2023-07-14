@@ -40,11 +40,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1677547379,
-        "narHash": "sha256-Djh8iUZzDVK6VqwahOph8Anw3e4PJdezKfe3Qt6AtQc=",
+        "lastModified": 1680225286,
+        "narHash": "sha256-wHvVyEF5tGyZU/Nn9lZmyp3T6XOrxF73kj3Kb8DJetY=",
         "owner": "hall",
         "repo": "kubenix",
-        "rev": "919e4ec901e52e330239db6e316cef5d6ed592c5",
+        "rev": "20907f568e1beba86ecbf2383b0158867a2040c7",
         "type": "github"
       },
       "original": {
@@ -55,8 +55,8 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1678224920,
-        "narHash": "sha256-VmFY9pZcBghZgEh+djp9WE5R4jTNsMRgzc5P0rSiwz0=",
+        "lastModified": 1683906255,
+        "narHash": "sha256-6izBP7A4f1aLVNCJq2+atIZ+nSZCVnomM/U67B4ylkM=",
         "path": "/home/matejc/workarea/nixpkgs",
         "type": "path"
       },
